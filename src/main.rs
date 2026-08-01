@@ -14,7 +14,7 @@ fn main() {
 	glfw.window_hint(glfw::WindowHint::Visible(false));
 	glfw.window_hint(glfw::WindowHint::Floating(true));
 	glfw.window_hint(glfw::WindowHint::ContextVersion(3, 3));
-	// glfw.window_hint(glfw::WindowHint::Decorated(false));
+	glfw.window_hint(glfw::WindowHint::Decorated(false));
 
 	let (mut window, events) = glfw.create_window(
 		300,
@@ -165,5 +165,17 @@ mod platform {
 
 	pub unsafe fn show_window(window: &mut glfw::Window) {
 		unsafe { window_ns_from_glfw(window) }.makeKeyAndOrderFront(None);
+	}
+}
+
+
+#[cfg(target_os = "windows")]
+mod platform {
+	pub unsafe fn init() {}
+
+	pub unsafe fn setup_window(window: &mut glfw::Window) {}
+
+	pub unsafe fn show_window(window: &mut glfw::Window) {
+		window.show();
 	}
 }

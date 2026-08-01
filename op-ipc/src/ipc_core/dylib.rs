@@ -1,5 +1,5 @@
 use std::num::NonZero;
-use std::ffi::CStr;
+use std::path::Path;
 
 #[repr(transparent)]
 #[derive(Clone, Copy, PartialEq, Eq, Hash)]
@@ -44,35 +44,40 @@ pub struct IpcDylib {
 
 impl IpcDylib {
 	pub fn load() -> Option<Self> {
+		#[cfg(any(target_os = "macos", target_os = "windows"))]
 		let mut home = std::env::home_dir()?;
+		#[cfg(target_os = "windows")]
+		let mut home_alt = home.clone();
 
 		#[cfg(target_os = "macos")]
 		let locations = {
-			use std::os::unix::ffi::OsStrExt;
-
 			home.push("Applications/1Password.app/Contents/Frameworks/libop_sdk_ipc_client.dylib\0");
 
 			[
-				c"/Applications/1Password.app/Contents/Frameworks/libop_sdk_ipc_client.dylib",
-				CStr::from_bytes_with_nul(home.as_os_str().as_bytes()).unwrap(),
+				Path::new("/Applications/1Password.app/Contents/Frameworks/libop_sdk_ipc_client.dylib"),
+				Path::new(&home),
 			]
 		};
 
 		#[cfg(target_os = "linux")]
 		let locations = [
-			c"/usr/bin/1password/libop_sdk_ipc_client.so",
-			c"/opt/1Password/libop_sdk_ipc_client.so",
-			c"/snap/bin/1password/libop_sdk_ipc_client.so",
+			Path::new("/usr/bin/1password/libop_sdk_ipc_client.so"),
+			Path::new("/opt/1Password/libop_sdk_ipc_client.so"),
+			Path::new("/snap/bin/1password/libop_sdk_ipc_client.so"),
 		];
 
-		// TODO
 		#[cfg(target_os = "windows")]
-		let locations = [
- 			path.Join(home, "AppData\\Local\\1Password\\op_sdk_ipc_client.dll"),
- 			c"C:\\Program Files\\1Password\\app\\8\\op_sdk_ipc_client.dll",
- 			c"C:\\Program Files (x86)\\1Password\\app\\8\\op_sdk_ipc_client.dll",
- 			path.Join(home, "AppData\\Local\\1Password\\app\\8\\op_sdk_ipc_client.dll"),
-  		];
+		let locations = {
+			home.push("AppData\\Local\\1Password\\op_sdk_ipc_client.dll\0");
+			home_alt.push("AppData\\Local\\1Password\\app\\8\\op_sdk_ipc_client.dll\0");
+
+			[
+				Path::new(&home),
+				Path::new("C:\\Program Files\\1Password\\app\\8\\op_sdk_ipc_client.dll\0"),
+				Path::new("C:\\Program Files (x86)\\1Password\\app\\8\\op_sdk_ipc_client.dll\0"),
+				Path::new(&home_alt),
+  			]
+		};
 
     	locations
      		.into_iter()
@@ -80,7 +85,7 @@ impl IpcDylib {
      		.next()
 	}
 
-	pub fn load_from(path: &CStr) -> Option<Self> {
+	pub fn load_from(path: &Path) -> Option<Self> {
 		let lib = dl::open(path)?;
 
 		unsafe {
