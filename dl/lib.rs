@@ -24,7 +24,7 @@ pub fn open(path: &Path) -> Option<NonNull<c_void>> {
 	let handle = unsafe { LoadLibraryW(path_enc.as_ptr()) };
 
 	#[cfg(unix)]
-	let handle = unsafe { dlopen(path_enc.as_ptr(), RTLD_LAZY) };
+	let handle = unsafe { dlopen(path_enc.as_ptr().cast::<c_char>(), RTLD_LAZY) };
 
 	NonNull::new(handle)
 }

@@ -5,7 +5,7 @@ use dylib::{IpcDylib, ConnectionError};
 
 #[derive(serde::Serialize)]
 #[serde(rename_all = "snake_case")]
-enum OperationKind {
+pub enum OperationKind {
 	InitClient,
 	Invoke,
 	ReleaseClient,
